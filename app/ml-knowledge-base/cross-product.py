@@ -2,12 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 from mpl_toolkits.mplot3d import Axes3D
+import torch
 
 def main():
     """
-    Demonstrate the cross product of two vectors in 3D space with interactive controls.
+    Demonstrate the cross product in NumPy and PyTorch for Machine Learning applications
     """
-    st.subheader("Vector Cross Product Visualization")
+    st.subheader("3D Cross Product in Machine Learning")
     
     # Interactive widget section
     st.sidebar.header("Control Panel")
@@ -25,50 +26,48 @@ def main():
     v2_y = st.sidebar.slider("Y component", -5.0, 5.0, 1.0, 0.1, key="v2y")
     v2_z = st.sidebar.slider("Z component", -5.0, 5.0, 0.0, 0.1, key="v2z")
     
-    # Create vectors from user input
-    v1 = np.array([v1_x, v1_y, v1_z])
-    v2 = np.array([v2_x, v2_y, v2_z])
+    # Create vectors using NumPy and PyTorch
+    np_v1 = np.array([v1_x, v1_y, v1_z])
+    np_v2 = np.array([v2_x, v2_y, v2_z])
     
-    # Calculate magnitude of vectors
-    v1_mag = np.linalg.norm(v1)
-    v2_mag = np.linalg.norm(v2)
+    torch_v1 = torch.tensor([v1_x, v1_y, v1_z], dtype=torch.float)
+    torch_v2 = torch.tensor([v2_x, v2_y, v2_z], dtype=torch.float)
     
-    # Calculate cross product
-    cross_product = np.cross(v1, v2)
-    cross_mag = np.linalg.norm(cross_product)
+    # Calculate cross products
+    np_cross = np.cross(np_v1, np_v2)
+    torch_cross = torch.cross(torch_v1, torch_v2).numpy()
     
-    # Calculate the area of the parallelogram
-    area = cross_mag
+    st.write("## NumPy vs PyTorch Implementations")
     
-    # Calculate the angle between vectors (in radians)
-    if v1_mag > 0 and v2_mag > 0:
-        dot_product = np.dot(v1, v2)
-        cos_angle = dot_product / (v1_mag * v2_mag)
-        # Clip to handle floating point errors
-        cos_angle = np.clip(cos_angle, -1.0, 1.0)
-        angle_rad = np.arccos(cos_angle)
-        angle_deg = np.degrees(angle_rad)
-    else:
-        angle_deg = 0
-    
-    # Display vector information
     col1, col2 = st.columns(2)
     
     with col1:
-        st.write("### Vector Values")
-        st.write(f"**Vector 1:** [{v1_x}, {v1_y}, {v1_z}]")
-        st.write(f"**Vector 2:** [{v2_x}, {v2_y}, {v2_z}]")
-        st.write(f"**Cross Product:** [{cross_product[0]:.2f}, {cross_product[1]:.2f}, {cross_product[2]:.2f}]")
+        st.write("### NumPy")
+        st.code("""
+# Create NumPy vectors
+v1 = np.array([{}, {}, {}])
+v2 = np.array([{}, {}, {}])
+
+# Calculate cross product
+cross_product = np.cross(v1, v2)
+print(f"Cross product: {cross_product}")
+        """.format(v1_x, v1_y, v1_z, v2_x, v2_y, v2_z))
+        
+        st.write(f"Result: [{np_cross[0]:.2f}, {np_cross[1]:.2f}, {np_cross[2]:.2f}]")
     
     with col2:
-        st.write("### Calculation Results")
-        st.write(f"**Cross Product Magnitude:** {cross_mag:.2f}")
-        st.write(f"**Angle between vectors:** {angle_deg:.2f}°")
-        st.write(f"**Area of parallelogram:** {area:.2f} square units")
+        st.write("### PyTorch")
+        st.code("""
+# Create PyTorch tensors
+v1 = torch.tensor([{}, {}, {}], dtype=torch.float)
+v2 = torch.tensor([{}, {}, {}], dtype=torch.float)
+
+# Calculate cross product
+cross_product = torch.cross(v1, v2)
+print(f"Cross product: {cross_product}")
+        """.format(v1_x, v1_y, v1_z, v2_x, v2_y, v2_z))
         
-        # Check if vectors are close to being parallel
-        if cross_mag < 0.1 and v1_mag > 0 and v2_mag > 0:
-            st.warning("Vectors are nearly parallel - cross product is close to zero vector")
+        st.write(f"Result: [{torch_cross[0]:.2f}, {torch_cross[1]:.2f}, {torch_cross[2]:.2f}]")
     
     # View angle controls
     st.sidebar.subheader("3D View Controls")
@@ -83,28 +82,15 @@ def main():
     ax.view_init(elev=elev, azim=azim)
     
     # Draw vectors as arrows
-    ax.quiver(0, 0, 0, v1[0], v1[1], v1[2], color='r', label='Vector 1')
-    ax.quiver(0, 0, 0, v2[0], v2[1], v2[2], color='b', label='Vector 2')
-    ax.quiver(0, 0, 0, cross_product[0], cross_product[1], cross_product[2], color='g', label='Cross Product')
-    
-    # Draw the parallelogram (if vectors aren't too close to parallel)
-    if cross_mag > 0.01:
-        # Create the parallelogram vertices
-        verts = np.array([
-            [0, 0, 0],  # Origin
-            [v1[0], v1[1], v1[2]],  # End of vector 1
-            [v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]],  # Corner point (v1 + v2)
-            [v2[0], v2[1], v2[2]]   # End of vector 2
-        ])
-        
-        # Plot the parallelogram with a semi-transparent face
-        ax.plot_trisurf(verts[:, 0], verts[:, 1], verts[:, 2], alpha=0.2, color='purple')
+    ax.quiver(0, 0, 0, np_v1[0], np_v1[1], np_v1[2], color='r', label='Vector 1')
+    ax.quiver(0, 0, 0, np_v2[0], np_v2[1], np_v2[2], color='b', label='Vector 2')
+    ax.quiver(0, 0, 0, np_cross[0], np_cross[1], np_cross[2], color='g', label='Cross Product')
     
     # Add origin point
     ax.scatter(0, 0, 0, color='black', s=50)
     
     # Set plot limits and labels
-    max_val = max(np.max(np.abs(v1)), np.max(np.abs(v2)), np.max(np.abs(cross_product)), 0.1) + 0.5
+    max_val = max(np.max(np.abs(np_v1)), np.max(np.abs(np_v2)), np.max(np.abs(np_cross)), 0.1) + 0.5
     ax.set_xlim([-max_val, max_val])
     ax.set_ylim([-max_val, max_val])
     ax.set_zlim([-max_val, max_val])
@@ -118,29 +104,84 @@ def main():
     # Display the plot in Streamlit
     st.pyplot(fig)
     
-    # Mathematical explanation
-    st.subheader("Cross Product Formula")
-    st.latex(r"\vec{A} \times \vec{B} = |A||B|\sin(\theta)\hat{n}")
+    # ML Applications
+    st.write("## Applications in Machine Learning and Computer Vision")
     
-    # Component form
-    st.latex(r"\vec{A} \times \vec{B} = \begin{vmatrix} \mathbf{i} & \mathbf{j} & \mathbf{k} \\ A_x & A_y & A_z \\ B_x & B_y & B_z \end{vmatrix}")
-    
-    st.latex(r"\vec{A} \times \vec{B} = \begin{pmatrix} A_y B_z - A_z B_y \\ A_z B_x - A_x B_z \\ A_x B_y - A_y B_x \end{pmatrix}")
-    
-    # Conceptual explanation
     st.write("""
-    The cross product has several important properties:
-    - It produces a vector that is perpendicular to both input vectors
-    - Its magnitude equals the area of the parallelogram formed by the two vectors
-    - The direction follows the right-hand rule: if you curl the fingers of your right hand from the first vector toward the second, your thumb points in the direction of the cross product
-    - If the vectors are parallel, the cross product is the zero vector
+    ### 3D Computer Vision
+    In computer vision, cross products are used to compute surface normals and camera orientations:
     
-    Applications include:
-    - Finding perpendicular vectors in 3D space
-    - Calculating torque in physics
-    - Computing surface normals in computer graphics
-    - Determining area of a parallelogram
+    ```python
+    # Calculate normal vector to a 3D surface using 3 points
+    def compute_normal(p1, p2, p3):
+        # Create vectors along the surface
+        v1 = p2 - p1
+        v2 = p3 - p1
+        # Normal vector is perpendicular to both v1 and v2
+        normal = np.cross(v1, v2)
+        # Normalize to unit length
+        return normal / np.linalg.norm(normal)
+    ```
+    
+    ### Feature Engineering
+    Cross products can be used to create new features that capture relationships between vectors:
+    
+    ```python
+    # Create new features from pairs of 3D vectors
+    def create_cross_features(vectors):
+        features = []
+        for i in range(len(vectors)):
+            for j in range(i+1, len(vectors)):
+                # Add cross product as a new feature
+                cross = np.cross(vectors[i], vectors[j])
+                features.append(cross)
+        return np.array(features)
+    ```
+    
+    ### Robotics and Reinforcement Learning
+    Cross products are essential in robotics applications like calculating torque and angular momentum:
+    
+    ```python
+    # Calculate torque in a robotic joint
+    def calculate_torque(force_vector, position_vector):
+        return np.cross(position_vector, force_vector)
+    ```
     """)
+    
+    # Add 3D rotations with PyTorch code
+    if st.checkbox("Show 3D Rotations with PyTorch"):
+        st.write("## 3D Rotations in PyTorch")
+        
+        st.code("""
+import torch
+from pytorch3d.transforms import axis_angle_to_matrix
+
+# Create rotation vectors (axis * angle)
+def create_rotation_matrix(axis, angle_degrees):
+    # Normalize axis
+    axis = axis / torch.norm(axis)
+    # Convert degrees to radians
+    angle_rad = torch.tensor(angle_degrees * 3.14159 / 180)
+    # Create axis-angle representation (axis * angle)
+    axis_angle = axis * angle_rad
+    # Convert to rotation matrix
+    rotation_matrix = axis_angle_to_matrix(axis_angle)
+    return rotation_matrix
+
+# Example usage
+axis = torch.tensor([0., 0., 1.])  # Rotation around Z axis
+angle = 45.0  # degrees
+R = create_rotation_matrix(axis, angle)
+print(f"Rotation matrix:\\n{R}")
+
+# Apply rotation to a point
+point = torch.tensor([1., 0., 0.])
+rotated_point = torch.matmul(R, point)
+print(f"Original point: {point}")
+print(f"Rotated point: {rotated_point}")
+""")
+        
+        st.info("Cross products are used internally in the calculation of 3D rotations!")
 
 # Direct execution (for testing)
 if __name__ == "__main__":
