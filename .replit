@@ -1,0 +1,66 @@
+modules = ["python-3.11"]
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["sh", "-c", "streamlit run app.py --server.port 5000"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "dot-product"
+mode = "sequential"
+author = 40845153
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+
+[[workflows.workflow]]
+name = "dot"
+mode = "parallel"
+author = 40845153
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "dot-product"
+
+[[workflows.workflow]]
+name = "Streamlit"
+author = 40845153
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run dashboard/app.py --server.port=5000 --server.address=0.0.0.0"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Vector Operations App"
+
+[[workflows.workflow]]
+name = "Vector Operations App"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run app/dashboard/app.py --server.port 5000"
+waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
